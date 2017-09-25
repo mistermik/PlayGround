@@ -1,0 +1,517 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "adminUsername": {
+      "defaultValue": "localadmin",
+      "type": "string",
+      "metadata": {
+        "description": "Admin username for VM"
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Admin password for VM"
+      }
+    },
+    "loadBalancers_CTMLB_name": {
+      "defaultValue": "CTMLB",
+      "type": "String"
+    },
+    "virtualMachines_ESAEDC01_name": {
+      "defaultValue": "ESAEDC01",
+      "type": "String"
+    },
+    "virtualNetworks_ESAE_VNet_name": {
+      "defaultValue": "ESAE-VNet",
+      "type": "String"
+    },
+    "storageAccounts_ctmstaccc_name": {
+      "defaultValue": "ctmstaccc",
+      "type": "String"
+    },
+    "publicIPAddresses_PIP_CTM_LB_name": {
+      "defaultValue": "PIP-CTM-LB",
+      "type": "String"
+    },
+    "availabilitySets_esaeavailset_name": {
+      "defaultValue": "esaeavailset",
+      "type": "String"
+    },
+    "networkInterfaces_esaedc01_name": {
+      "defaultValue": "esaedc01",
+      "type": "String"
+    },
+    "networkSecurityGroups_ESAE_NGS_name": {
+      "defaultValue": "ESAE-NGS",
+      "type": "String"
+    },
+    "storageAccounts_ctmstdiagnostics_name": {
+      "defaultValue": "ctmstdiagnostics",
+      "type": "String"
+    },
+    "subnets_ESAE_Vlan_name": {
+      "defaultValue": "ESAE-Vlan",
+      "type": "String"
+    },
+    "securityRules_Port_3389_name": {
+      "defaultValue": "Port_3389",
+      "type": "String"
+    }
+    //"loadBalancers_CTMLB_id": {
+    //  "defaultValue": "/subscriptions/232a0883-2b74-464b-863b-7301c968ce79/resourceGroups/CTMTEST/providers/Microsoft.Network/loadBalancers/CTMLB/frontendIPConfigurations/LoadBalancerFrontEnd",
+    //  "type": "String"
+    //}
+  },
+  "variables": {
+    "lbID": "[resourceId('Microsoft.Network/loadBalancers',parameters('loadBalancers_CTMLB_name'))]",
+    "frontEndIPConfigID": "[concat(variables('lbID'),'/frontendIPConfigurations/LoadBalancerFrontEnd')]"
+  },
+  "resources": [
+    {
+      "comments": "Generalized from resource: '/subscriptions/232a0883-2b74-464b-863b-7301c968ce79/resourceGroups/CTMTEST/providers/Microsoft.Compute/availabilitySets/esaeavailset'.",
+      "type": "Microsoft.Compute/availabilitySets",
+      "sku": {
+        "name": "Classic"
+      },
+      "name": "[parameters('availabilitySets_esaeavailset_name')]",
+      "apiVersion": "2016-04-30-preview",
+      "location": "northeurope",
+      "scale": null,
+      "properties": {
+        "platformUpdateDomainCount": 5,
+        "platformFaultDomainCount": 2,
+        "virtualMachines": [
+          {
+            "id": "[resourceId('Microsoft.Compute/virtualMachines', parameters('virtualMachines_ESAEDC01_name'))]"
+          }
+        ]
+      },
+      "dependsOn": []
+      //"dependsOn": [
+      //  "[resourceId('Microsoft.Compute/virtualMachines', parameters('virtualMachines_ESAEDC01_name'))]"
+      //]
+    },
+    {
+      "comments": "Generalized from resource: '/subscriptions/232a0883-2b74-464b-863b-7301c968ce79/resourceGroups/CTMTEST/providers/Microsoft.Compute/virtualMachines/ESAEDC01'.",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[parameters('virtualMachines_ESAEDC01_name')]",
+      "apiVersion": "2016-04-30-preview",
+      "location": "northeurope",
+      "scale": null,
+      "properties": {
+        "availabilitySet": {
+          "id": "[resourceId('Microsoft.Compute/availabilitySets', parameters('availabilitySets_esaeavailset_name'))]"
+        },
+        "hardwareProfile": {
+          "vmSize": "Standard_D1"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "MicrosoftWindowsServer",
+            "offer": "WindowsServer",
+            "sku": "2016-Datacenter",
+            "version": "latest"
+          },
+          "osDisk": {
+            "osType": "Windows",
+            "name": "[parameters('virtualMachines_ESAEDC01_name')]",
+            "createOption": "FromImage",
+            "vhd": {
+              "uri": "[concat('https', '://', parameters('storageAccounts_ctmstaccc_name'), '.blob.core.windows.net', concat('/vhds/', parameters('virtualMachines_ESAEDC01_name'),'20170913191936.vhd'))]"
+            },
+            "caching": "ReadWrite",
+            "diskSizeGB": 127
+          },
+          "dataDisks": []
+        },
+        "osProfile": {
+          "computerName": "[parameters('virtualMachines_ESAEDC01_name')]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]",
+          "windowsConfiguration": {
+            "provisionVMAgent": true,
+            "enableAutomaticUpdates": true
+          },
+          "secrets": []
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', parameters('networkInterfaces_esaedc01_name'))]"
+            }
+          ]
+        },
+        "diagnosticsProfile": {
+          "bootDiagnostics": {
+            "enabled": true,
+            "storageUri": "[concat('https', '://', parameters('storageAccounts_ctmstdiagnostics_name'), '.blob.core.windows.net', '/')]"
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/availabilitySets', parameters('availabilitySets_esaeavailset_name'))]",
+        "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccounts_ctmstaccc_name'))]",
+        "[resourceId('Microsoft.Network/networkInterfaces', parameters('networkInterfaces_esaedc01_name'))]",
+        "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccounts_ctmstdiagnostics_name'))]"
+      ]
+    },
+    {
+      "comments": "Generalized from resource: '/subscriptions/232a0883-2b74-464b-863b-7301c968ce79/resourceGroups/CTMTEST/providers/Microsoft.Network/loadBalancers/CTMLB'.",
+      "type": "Microsoft.Network/loadBalancers",
+      "name": "[parameters('loadBalancers_CTMLB_name')]",
+      "apiVersion": "2017-06-01",
+      "location": "northeurope",
+      "scale": null,
+      "properties": {
+        "frontendIPConfigurations": [
+          {
+            "name": "LoadBalancerFrontEnd",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('publicIPAddresses_PIP_CTM_LB_name'))]"
+              }
+            }
+          }
+        ],
+        "backendAddressPools": [],
+        "loadBalancingRules": [],
+        "probes": [],
+        "inboundNatRules": [
+          {
+            "name": "ESAE-DC01",
+            "etag": "W/\"c77329fc-6dad-46dc-b29b-588108190eb7\"",
+            "properties": {
+              "provisioningState": "Succeeded",
+              "frontendIPConfiguration": {
+                //"id": "[parameters('loadBalancers_CTMLB_id')]"
+                "id": "[variables('frontEndIPConfigID')]"
+              },
+              "frontendPort": 3391,
+              "backendPort": 3389,
+              "enableFloatingIP": false,
+              "idleTimeoutInMinutes": 4,
+              "protocol": "Tcp"
+            }
+          }
+        ],
+        "outboundNatRules": [],
+        "inboundNatPools": []
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/publicIPAddresses', parameters('publicIPAddresses_PIP_CTM_LB_name'))]"
+      ]
+    },
+    {
+      "comments": "Generalized from resource: '/subscriptions/232a0883-2b74-464b-863b-7301c968ce79/resourceGroups/CTMTEST/providers/Microsoft.Network/networkInterfaces/esaedc01'.",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[parameters('networkInterfaces_esaedc01_name')]",
+      "apiVersion": "2017-06-01",
+      "location": "northeurope",
+      "scale": null,
+      "properties": {
+        //"provisioningstate": "succeeded",
+        //"resourceguid": "1fbd8845-57ed-40be-886b-37a4b23d7d01",
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "etag": "W/\"66d605b4-efdf-43d4-b0e5-2a1a5f828cb3\"",
+            "properties": {
+              //"provisioningState": "Succeeded",
+              //"privateIPAddress": "10.1.0.4",
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworks_ESAE_VNet_name'), parameters('subnets_ESAE_Vlan_name'))]"
+              },
+              "primary": true,
+              "privateIPAddressVersion": "IPv4",
+              "loadBalancerInboundNatRules": [
+                {
+                  "id": "[concat(resourceId('Microsoft.Network/loadBalancers', parameters('loadBalancers_CTMLB_name')), '/inboundNatRules/ESAE-DC01')]"
+                }
+              ]
+            }
+          }
+        ],
+        "dnsSettings": {
+          "dnsServers": [],
+          "appliedDnsServers": []
+        },
+        "enableAcceleratedNetworking": false,
+        "enableIPForwarding": false,
+        "networkSecurityGroup": {
+          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroups_ESAE_NGS_name'))]"
+        },
+        "primary": true,
+        "virtualMachine": {
+          "id": "[resourceId('Microsoft.Compute/virtualMachines', parameters('virtualMachines_ESAEDC01_name'))]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworks_ESAE_VNet_name'), parameters('subnets_ESAE_Vlan_name'))]",
+        "[resourceId('Microsoft.Network/loadBalancers', parameters('loadBalancers_CTMLB_name'))]",
+        "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroups_ESAE_NGS_name'))]"
+        //"[resourceId('Microsoft.Compute/virtualMachines', parameters('virtualMachines_ESAEDC01_name'))]"
+      ]
+    },
+    {
+      "comments": "Generalized from resource: '/subscriptions/232a0883-2b74-464b-863b-7301c968ce79/resourceGroups/CTMTEST/providers/Microsoft.Network/networkSecurityGroups/ESAE-NGS'.",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[parameters('networkSecurityGroups_ESAE_NGS_name')]",
+      "apiVersion": "2017-06-01",
+      "location": "northeurope",
+      "scale": null,
+      "properties": {
+        "provisioningState": "Succeeded",
+        "resourceGuid": "fc874362-8dd7-47de-bf8e-9956b161e9b4",
+        "securityRules": [
+          {
+            "name": "Port_3389",
+            "etag": "W/\"8df99926-02a6-43a0-853a-137ddfafddc7\"",
+            "properties": {
+              "provisioningState": "Succeeded",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "3389",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 100,
+              "direction": "Inbound",
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          }
+        ],
+        "defaultSecurityRules": [
+          {
+            "name": "AllowVnetInBound",
+            "etag": "W/\"8df99926-02a6-43a0-853a-137ddfafddc7\"",
+            "properties": {
+              "provisioningState": "Succeeded",
+              "description": "Allow inbound traffic from all VMs in VNET",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "VirtualNetwork",
+              "destinationAddressPrefix": "VirtualNetwork",
+              "access": "Allow",
+              "priority": 65000,
+              "direction": "Inbound",
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          },
+          {
+            "name": "AllowAzureLoadBalancerInBound",
+            "etag": "W/\"8df99926-02a6-43a0-853a-137ddfafddc7\"",
+            "properties": {
+              "provisioningState": "Succeeded",
+              "description": "Allow inbound traffic from azure load balancer",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "AzureLoadBalancer",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 65001,
+              "direction": "Inbound",
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          },
+          {
+            "name": "DenyAllInBound",
+            "etag": "W/\"8df99926-02a6-43a0-853a-137ddfafddc7\"",
+            "properties": {
+              "provisioningState": "Succeeded",
+              "description": "Deny all inbound traffic",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Deny",
+              "priority": 65500,
+              "direction": "Inbound",
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          },
+          {
+            "name": "AllowVnetOutBound",
+            "etag": "W/\"8df99926-02a6-43a0-853a-137ddfafddc7\"",
+            "properties": {
+              "provisioningState": "Succeeded",
+              "description": "Allow outbound traffic from all VMs to all VMs in VNET",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "VirtualNetwork",
+              "destinationAddressPrefix": "VirtualNetwork",
+              "access": "Allow",
+              "priority": 65000,
+              "direction": "Outbound",
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          },
+          {
+            "name": "AllowInternetOutBound",
+            "etag": "W/\"8df99926-02a6-43a0-853a-137ddfafddc7\"",
+            "properties": {
+              "provisioningState": "Succeeded",
+              "description": "Allow outbound traffic from all VMs to Internet",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "Internet",
+              "access": "Allow",
+              "priority": 65001,
+              "direction": "Outbound",
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          },
+          {
+            "name": "DenyAllOutBound",
+            "etag": "W/\"8df99926-02a6-43a0-853a-137ddfafddc7\"",
+            "properties": {
+              "provisioningState": "Succeeded",
+              "description": "Deny all outbound traffic",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Deny",
+              "priority": 65500,
+              "direction": "Outbound",
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          }
+        ]
+      },
+      "dependsOn": []
+    },
+    {
+      "comments": "Generalized from resource: '/subscriptions/232a0883-2b74-464b-863b-7301c968ce79/resourceGroups/CTMTEST/providers/Microsoft.Network/publicIPAddresses/PIP-CTM-LB'.",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[parameters('publicIPAddresses_PIP_CTM_LB_name')]",
+      "apiVersion": "2017-06-01",
+      "location": "northeurope",
+      "scale": null,
+      "properties": {
+        "provisioningState": "Succeeded",
+        "resourceGuid": "f70f4274-094b-4f1d-a7d2-56bfd3ef86b9",
+        "ipAddress": "52.169.11.21",
+        "publicIPAddressVersion": "IPv4",
+        "publicIPAllocationMethod": "Static",
+        "idleTimeoutInMinutes": 4
+      },
+      "dependsOn": []
+    },
+    {
+      "comments": "Generalized from resource: '/subscriptions/232a0883-2b74-464b-863b-7301c968ce79/resourceGroups/CTMTEST/providers/Microsoft.Network/virtualNetworks/ESAE-VNet'.",
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[parameters('virtualNetworks_ESAE_VNet_name')]",
+      "apiVersion": "2017-06-01",
+      "location": "northeurope",
+      "scale": null,
+      "properties": {
+        "provisioningState": "Succeeded",
+        "resourceGuid": "0e7c1a3e-4b2e-41e3-b424-41c015aada02",
+        "addressSpace": {
+          "addressPrefixes": [
+            "10.1.0.0/24"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "ESAE-Vlan",
+            "etag": "W/\"9326e21d-4fce-45b6-bd8d-93b89c4a23db\"",
+            "properties": {
+              "provisioningState": "Succeeded",
+              "addressPrefix": "10.1.0.0/24"
+            }
+          }
+        ],
+        "virtualNetworkPeerings": []
+      },
+      "dependsOn": []
+    },
+    {
+      "comments": "Generalized from resource: '/subscriptions/232a0883-2b74-464b-863b-7301c968ce79/resourceGroups/ctmtest/providers/Microsoft.Storage/storageAccounts/ctmstaccc'.",
+      "type": "Microsoft.Storage/storageAccounts",
+      "sku": {
+        "name": "Standard_LRS",
+        "tier": "Standard"
+      },
+      "kind": "Storage",
+      "name": "[parameters('storageAccounts_ctmstaccc_name')]",
+      "apiVersion": "2016-01-01",
+      "location": "northeurope",
+      "tags": {},
+      "scale": null,
+      "properties": {},
+      "dependsOn": []
+    },
+    {
+      "comments": "Generalized from resource: '/subscriptions/232a0883-2b74-464b-863b-7301c968ce79/resourceGroups/ctmtest/providers/Microsoft.Storage/storageAccounts/ctmstdiagnostics'.",
+      "type": "Microsoft.Storage/storageAccounts",
+      "sku": {
+        "name": "Standard_LRS",
+        "tier": "Standard"
+      },
+      "kind": "Storage",
+      "name": "[parameters('storageAccounts_ctmstdiagnostics_name')]",
+      "apiVersion": "2016-01-01",
+      "location": "northeurope",
+      "tags": {},
+      "scale": null,
+      "properties": {},
+      "dependsOn": []
+    },
+    {
+      "comments": "Generalized from resource: '/subscriptions/232a0883-2b74-464b-863b-7301c968ce79/resourceGroups/CTMTEST/providers/Microsoft.Network/networkSecurityGroups/ESAE-NGS/securityRules/Port_3389'.",
+      "type": "Microsoft.Network/networkSecurityGroups/securityRules",
+      "name": "[concat(parameters('networkSecurityGroups_ESAE_NGS_name'), '/', parameters('securityRules_Port_3389_name'))]",
+      "apiVersion": "2017-06-01",
+      "scale": null,
+      "properties": {
+        "provisioningState": "Succeeded",
+        "protocol": "*",
+        "sourcePortRange": "*",
+        "destinationPortRange": "3389",
+        "sourceAddressPrefix": "*",
+        "destinationAddressPrefix": "*",
+        "access": "Allow",
+        "priority": 100,
+        "direction": "Inbound",
+        "sourceAddressPrefixes": [],
+        "destinationAddressPrefixes": []
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroups_ESAE_NGS_name'))]"
+      ]
+    },
+    {
+      "comments": "Generalized from resource: '/subscriptions/232a0883-2b74-464b-863b-7301c968ce79/resourceGroups/CTMTEST/providers/Microsoft.Network/virtualNetworks/ESAE-VNet/subnets/ESAE-Vlan'.",
+      "type": "Microsoft.Network/virtualNetworks/subnets",
+      "name": "[concat(parameters('virtualNetworks_ESAE_VNet_name'), '/', parameters('subnets_ESAE_Vlan_name'))]",
+      "apiVersion": "2017-06-01",
+      "scale": null,
+      "properties": {
+        "provisioningState": "Succeeded",
+        "addressPrefix": "10.1.0.0/24"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworks_ESAE_VNet_name'))]"
+      ]
+    }
+  ]
+}

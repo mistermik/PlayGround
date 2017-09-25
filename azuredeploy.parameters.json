@@ -1,0 +1,49 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "adminUsername": {
+      "value": "localadmin"
+    },
+    "adminPassword": {
+      "value": ""
+    },
+    "loadBalancers_CTMLB_name": {
+      "value": "CTMLB"
+    },
+    "virtualMachines_ESAEDC01_name": {
+      "value": "ESAEDC01"
+    },
+    "virtualNetworks_ESAE_VNet_name": {
+      "value": "ESAE-VNet"
+    },
+    "storageAccounts_ctmstaccc_name": {
+      "value": "ctmstacccsta"
+    },
+    "publicIPAddresses_PIP_CTM_LB_name": {
+      "value": "PIP-CTM-LB"
+    },
+    "availabilitySets_esaeavailset_name": {
+      "value": "esaeavailset"
+    },
+    "networkInterfaces_esaedc01_name": {
+      "value": "esaedc01_nic1"
+    },
+    "networkSecurityGroups_ESAE_NGS_name": {
+      "value": "ESAE-NSG"
+    },
+    "storageAccounts_ctmstdiagnostics_name": {
+      "value": "ctmstacccdiagsta"
+    },
+    "subnets_ESAE_Vlan_name": {
+      "value": "ESAE-Vlan"
+    },
+    "securityRules_Port_3389_name": {
+      "value": "Port_3389"
+    }
+
+    //"loadBalancers_CTMLB_id": {
+    //  "value": null
+    //}
+  }
+}
